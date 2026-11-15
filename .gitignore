@@ -1,0 +1,7 @@
+resultados/*.pt
+controllers/walk/walk
+controllers/walk/*.o
+controllers/walk/*.d
+controllers/walk/build/
+__pycache__/
+*.pyc

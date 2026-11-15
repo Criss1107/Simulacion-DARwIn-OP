@@ -1,0 +1,5 @@
+agente,semilla,episodio,decisiones,retorno,pasos,motivo,segundos
+pva,0,1,51,-4.5855,51,caida,2.54
+pva,0,2,86,-7.8702,35,caida,1.52
+pva,0,3,136,-5.0131,50,colision,2.01
+pva,0,4,286,-1.6012,150,tiempo,6.33
