@@ -12,7 +12,7 @@ import time
 import gymnasium as gym
 
 COLUMNAS = ["agente", "semilla", "episodio", "decisiones", "retorno",
-            "pasos", "motivo", "segundos"]
+            "pasos", "motivo", "dist_final", "segundos"]
 
 
 class RegistroEpisodios(gym.Wrapper):
@@ -23,12 +23,10 @@ class RegistroEpisodios(gym.Wrapper):
         self.episodio = 0
         self.decisiones = 0          # pasos de RL acumulados
         self._ret, self._pasos, self._t0 = 0.0, 0, time.time()
-        nuevo = not os.path.exists(ruta_csv)
-        self._f = open(ruta_csv, "a", newline="")
+        self._f = open(ruta_csv, "w", newline="")   # cada corrida sobrescribe
         self._w = csv.writer(self._f)
-        if nuevo:
-            self._w.writerow(COLUMNAS)
-            self._f.flush()
+        self._w.writerow(COLUMNAS)
+        self._f.flush()
 
     def reset(self, **kwargs):
         self._ret, self._pasos, self._t0 = 0.0, 0, time.time()
@@ -43,6 +41,7 @@ class RegistroEpisodios(gym.Wrapper):
             self.episodio += 1
             self._w.writerow([self.agente, self.semilla, self.episodio, self.decisiones,
                               round(self._ret, 4), self._pasos, info.get("motivo", ""),
+                              round(info.get("dist", float("nan")), 3),
                               round(time.time() - self._t0, 2)])
             self._f.flush()
         return obs, r, term, trunc, info

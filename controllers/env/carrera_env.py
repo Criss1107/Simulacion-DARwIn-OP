@@ -40,8 +40,14 @@ class CarreraEnv(gym.Env):
 
     def __init__(self, meta_dist=3.0, n_obstaculos=3, repeticion=25,
                  max_pasos=150, z_caida=0.20, r_obstaculo=0.15,
-                 r_robot=0.12, pasos_parada=100):
+                 r_robot=0.12, pasos_parada=100,
+                 y_inicio=0.0, meta_lat=0.5, ancho=0.6, yaw_max=0.2):
         super().__init__()
+        # variantes del entorno (los valores por defecto reproducen el entorno estandar)
+        self.y_inicio = y_inicio      # desplazamiento lateral de la posicion inicial (m)
+        self.meta_lat = meta_lat      # la meta cae a +-meta_lat m del eje de salida
+        self.ancho = ancho            # los obstaculos caen a +-ancho m del eje de salida
+        self.yaw_max = yaw_max        # giro inicial aleatorio maximo (rad)
         self.pasos_parada = pasos_parada  # pasos para volver a postura inicial
         self.meta_dist = meta_dist
         self.n_obstaculos = n_obstaculos
@@ -119,7 +125,7 @@ class CarreraEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         rng = self.np_random
-        x0, y0 = self.pos0[0], self.pos0[1]
+        x0, y0 = self.pos0[0], self.pos0[1] + self.y_inicio
 
         for n in self.nodos_obs:
             n.remove()
@@ -130,11 +136,11 @@ class CarreraEnv(gym.Env):
         self.f_custom.setSFString("0 0 0")
         for _ in range(self.pasos_parada):
             self._sim_step()
-        self.f_trans.setSFVec3f(self.pos0)
-        self.f_rot.setSFRotation([0, 0, 1, float(rng.uniform(-0.2, 0.2))])
+        self.f_trans.setSFVec3f([x0, y0, self.pos0[2]])
+        self.f_rot.setSFRotation([0, 0, 1, float(rng.uniform(-self.yaw_max, self.yaw_max))])
         self.robot.resetPhysics()
 
-        self.meta = (x0 + self.meta_dist, y0 + float(rng.uniform(-0.5, 0.5)))
+        self.meta = (x0 + self.meta_dist, y0 + float(rng.uniform(-self.meta_lat, self.meta_lat)))
         self.meta_nodo.getField("translation").setSFVec3f(
             [self.meta[0], self.meta[1], 0.005])
 
@@ -142,7 +148,7 @@ class CarreraEnv(gym.Env):
         while len(self.obstaculos) < self.n_obstaculos and intentos < 200:
             intentos += 1
             ox = float(rng.uniform(x0 + 0.8, self.meta[0] - 0.6))
-            oy = float(rng.uniform(y0 - 0.6, y0 + 0.6))
+            oy = float(rng.uniform(y0 - self.ancho, y0 + self.ancho))
             if all(math.hypot(ox - a, oy - b) > 0.5 for a, b in self.obstaculos):
                 self.obstaculos.append((ox, oy))
                 self.nodos_obs.append(self._crear_nodo(
@@ -185,4 +191,4 @@ class CarreraEnv(gym.Env):
         truncado = (not terminado) and self.pasos >= self.max_pasos
         if truncado:
             motivo = "tiempo"
-        return self._obs(), recompensa, terminado, truncado, {"motivo": motivo}
+        return self._obs(), recompensa, terminado, truncado, {"motivo": motivo, "dist": dist}

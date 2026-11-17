@@ -1,0 +1,5 @@
+puesto,participante,carril,motivo,tiempo_sim_s,decisiones,puntos_alcanzados,contactos_robots,dist_meta_m
+1,DQN,4,colision,,224,1,0,2.58
+2,A2C,1,colision,,70,1,0,2.79
+3,PPO,2,choque_robot,,10,0,1,4.2
+4,PVA-AC,3,choque_robot,,10,0,1,4.28

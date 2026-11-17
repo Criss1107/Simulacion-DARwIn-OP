@@ -8,6 +8,7 @@ Basado en el notebook del Taller 2 (Asteroids). Cambios respecto al original:
   - Se completaron los fallos del notebook: lam_s, claves de cnt, metricas
     corr/div y el warm-up (existia en Cfg pero no se usaba).
 """
+import math
 import time
 import random
 import collections
@@ -497,6 +498,38 @@ def random_baseline(env, n_episodes=10, seed=1000, max_steps=1000):
         env.reset(seed=seed + ep); total, done, steps, info = 0.0, False, 0, {}
         while not done and steps < max_steps:
             _, r, term, trunc, info = env.step(env.action_space.sample())
+            total += r; done = term or trunc; steps += 1
+        rets.append(total); ok.append(_exito(info))
+    return float(np.mean(rets)), float(np.std(rets)), float(np.mean(ok))
+
+
+def _politica_heuristica(obs, evadir=True):
+    """Referencia sin aprendizaje: va hacia la meta y esquiva obstaculos cercanos.
+    obs[1], obs[2] = sen/cos del angulo a la meta (>0: meta a la izquierda);
+    obs[3:8] = rayos a -60, -30, 0, +30, +60 grados (izquierda = angulo positivo)."""
+    r_der, r_izq = min(obs[3], obs[4]), min(obs[6], obs[7])
+    if evadir and min(obs[4], obs[5], obs[6]) < 0.35:   # obstaculo a ~0.5 m
+        return 3 if r_izq >= r_der else 4            # girar hacia el lado mas libre
+    ang = math.atan2(obs[1], obs[2])
+    if ang > 0.5:
+        return 3
+    if ang > 0.15:
+        return 1
+    if ang < -0.5:
+        return 4
+    if ang < -0.15:
+        return 2
+    return 0
+
+
+def heuristic_baseline(env, n_episodes=10, seed=1000, max_steps=1000, evadir=True):
+    """Politica heuristica (evadir=False: va directo a la meta ignorando obstaculos).
+    Devuelve (media, desv, tasa de meta)."""
+    rets, ok = [], []
+    for ep in range(n_episodes):
+        o, _ = env.reset(seed=seed + ep); total, done, steps, info = 0.0, False, 0, {}
+        while not done and steps < max_steps:
+            o, r, term, trunc, info = env.step(_politica_heuristica(o, evadir))
             total += r; done = term or trunc; steps += 1
         rets.append(total); ok.append(_exito(info))
     return float(np.mean(rets)), float(np.std(rets)), float(np.mean(ok))
