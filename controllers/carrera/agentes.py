@@ -132,6 +132,16 @@ def cargar(tipo, archivo, res_dir, semilla=0):
         return AgenteA2C(ruta)
     if tipo == "sb3_a2c":
         return AgenteSB3("a2c", ruta)
-    if tipo in ("ppo", "dqn"):
-        return AgenteSB3(tipo, ruta)
+   if tipo == "ppo":
+        return AgentePPO(ruta)
+    if tipo == "dqn":
+        return AgenteDQN(ruta)
     raise SystemExit(f"Tipo de agente desconocido: {tipo}")
+    class AgentePPO(AgenteSB3):
+    def __init__(self, ruta, deterministico=True):
+        super().__init__("ppo", ruta, deterministico)
+
+
+class AgenteDQN(AgenteSB3):
+    def __init__(self, ruta, deterministico=True):
+        super().__init__("dqn", ruta, deterministico)
