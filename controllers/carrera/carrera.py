@@ -26,13 +26,13 @@ from controller import Supervisor                                          # noq
 from carrera_env import ACCIONES, ANGULOS_RAYOS, RANGO_MAX, _rayo_circulo  # noqa: E402
 import agentes                                                             # noqa: E402
 
-# ----------------------------------------------------------- configuracion
+#configuracion
 SEMILLA = 0            # cambia el reparto de carriles y la posicion de los obstaculos
-PARTICIPANTES = [      # (nombre, tipo, archivo en resultados/ sin extension)
-    ("PVA-AC", "pva", "pva_s0"),
-    ("A2C", "a2c", "a2c_s0"),
-    ("PPO", "heuristico_directo", None),   # cuando exista: ("PPO", "ppo", "ppo_s0")
-    ("DQN", "aleatorio", None),            # cuando exista: ("DQN", "dqn", "dqn_s0")
+PARTICIPANTES = [
+    ("PVA-AC", "pva", "pva_sin_abs_s2"),
+    ("A2C", "a2c", "a2c_s2"),
+    ("PPO", "ppo", "ppo_s0"),
+    ("DQN", "dqn", "dqn_s0"),
 ]
 WAYPOINTS = [(1.5, 0.6), (3.0, -0.6), (4.5, 0.0)]   # relativos a la salida; el ultimo = meta
 N_OBST = 3
