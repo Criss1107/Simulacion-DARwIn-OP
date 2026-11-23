@@ -37,6 +37,6 @@ Floor {
 }
 Robot {
   name "supervisor"
-  controller "env"
+  controller "entrenar_sb3"
   supervisor TRUE
 }
