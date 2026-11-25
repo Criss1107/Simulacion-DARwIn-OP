@@ -8,6 +8,8 @@ import gymnasium as gym
 import torch
 import stable_baselines3 as sb3
 from stable_baselines3 import DQN, PPO
+import sys
+print("PYTHON DE WEBOTS:", sys.executable, flush=True)
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(RAIZ, "controllers", "env"))      # carrera_env, registro
@@ -15,20 +17,21 @@ sys.path.insert(0, os.path.join(RAIZ, "controllers", "env"))      # carrera_env,
 from carrera_env import CarreraEnv  # noqa: E402
 from registro import RegistroEpisodios  # noqa: E402
 
-# ----------------------------------------------------------- configuracion
-MODO = "humo"                 # "humo" (prueba corta) | "entrenar" (entrena y evalua) |
-                              # "evaluar" (carga los .zip y evalua) | "variantes" (4 variantes del entorno)
-ALGORITMOS = ["ppo", "dqn"]   # puedes correr uno solo para repartir el trabajo en varias sesiones
+#configuracion
+MODO = "entrenar"             #"humo" (prueba corta)  "entrenar" (entrena y evalua) 
+                              #"evaluar" (carga los .zip y evalua) - "variantes" (4 variantes del entorno)
+ALGORITMOS = ["dqn"]          #correr uno solo para repartir el trabajo en varias sesiones
 SEMILLAS = [0, 1, 2]
-SEMILLAS_VARIANTES = [0]      # el enunciado pide ppo_s0 y dqn_s0
+SEMILLAS_VARIANTES = [0]      #el enunciado pide ppo_s0 y dqn_s0
 TOTAL_TIMESTEPS = 40000       # presupuesto obligatorio: exactamente 40 000 decisiones
 N_EVAL = 30
 MAX_PASOS = 250
-REW_SCALE = 0.1               # igual que A2C/PVA-AC: solo escala la recompensa de ENTRENAMIENTO
-EVAL_DETERMINISTA = True      # accion = argmax (PPO) / greedy (DQN); es lo estandar en SB3
-SOBRESCRIBIR = False          # True solo para repetir una corrida que ya tiene su .zip
+REW_SCALE = 0.1               #igual que A2C/PVA-AC: solo escala la recompensa de ENTRENAMIENTO
+EVAL_DETERMINISTA = True      #accion = argmax (PPO) / greedy (DQN) es lo estandar en SB3
+SOBRESCRIBIR = False          #True solo para repetir una corrida que ya tiene su .zip
 
-# Hiperparametros.  PPO: n_steps * n_envs divide a 40 000, asi el entrenamiento se detiene en
+# Hiperparametros
+# PO: n_steps * n_envs divide a 40 000, asi el entrenamiento se detiene en
 # exactamente 40 000 decisiones (con n_steps=2048 SB3 haria 40 960).
 PPO_HP = dict(learning_rate=3e-4, n_steps=250, batch_size=50, n_epochs=10, gamma=0.99,
               gae_lambda=0.95, clip_range=0.2, ent_coef=0.01, vf_coef=0.5, max_grad_norm=0.5,
@@ -39,14 +42,14 @@ DQN_HP = dict(learning_rate=1e-3, buffer_size=40000, learning_starts=1000, batch
               max_grad_norm=10, policy_kwargs=dict(net_arch=[128, 128]))
 CLASES = {"ppo": (PPO, PPO_HP), "dqn": (DQN, DQN_HP)}
 
-# variante -> parametros (los mismos que usaste con PVA-AC y A2C; ver nombres en resultados/)
+# variante -> parametros (los mismos que usamos con PVA-AC y A2C, ver nombres en resultados)
 VARIANTES = {
     "obs5":     dict(n_obst=5),
     "largo":    dict(meta_dist=4.5, max_pasos=350),
     "estrecha": dict(meta_lat=0.35, ancho=0.35),
     "lateral":  dict(y_inicio=0.4),
 }
-# -------------------------------------------------------------------------
+
 
 RES = os.path.join(RAIZ, "resultados")
 os.makedirs(RES, exist_ok=True)

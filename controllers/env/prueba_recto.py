@@ -8,9 +8,9 @@ for ep in range(5):
     while True:
         ang = math.atan2(obs[1], obs[2])   # >0: la meta está a la izquierda
         if ang > 0.5:
-            a = 3          # girar en sitio a la izquierda
+            a = 3          #girar en sitio a la izquierda
         elif ang > 0.15:
-            a = 1          # recto + izquierda
+            a = 1          #recto + izquierda
         elif ang < -0.5:
             a = 4
         elif ang < -0.15:

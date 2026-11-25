@@ -1,9 +1,8 @@
 """Registro de episodios en CSV, igual para todos los agentes (PVA-AC, PPO, DQN, A2C).
 
-Uso:
-    env = RegistroEpisodios(CarreraEnv(), "resultados/ppo_s0_train.csv", "ppo", 0)
-    # ... entrenar o evaluar con `env` como cualquier entorno de Gymnasium ...
-Cada episodio terminado agrega una fila al CSV.
+Uso:env = RegistroEpisodios(CarreraEnv(), "resultados/ppo_s0_train.csv", "ppo", 0)
+#entrenar o evaluar con `env` como cualquier entorno de Gymnasium 
+cada episodio terminado agrega una fila al CSV
 """
 import csv
 import os

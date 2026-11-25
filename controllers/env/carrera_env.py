@@ -1,7 +1,6 @@
-"""Entorno Gymnasium para la carrera del robot en Webots (Parte 1).
+"""Entorno Gymnasium para la carrera del robot en Webots 
 
-Se usa desde un controlador Supervisor de Webots. La accion se envia al
-caminador en C++ mediante el campo customData del robot (DEF ROBOT).
+Se usa desde un controlador Supervisor de Webots. La accion se envia al caminador en C++ mediante el campo customData del robot (DEF ROBOT).
 """
 import math
 
@@ -43,17 +42,17 @@ class CarreraEnv(gym.Env):
                  r_robot=0.12, pasos_parada=100,
                  y_inicio=0.0, meta_lat=0.5, ancho=0.6, yaw_max=0.2):
         super().__init__()
-        # variantes del entorno (los valores por defecto reproducen el entorno estandar)
-        self.y_inicio = y_inicio      # desplazamiento lateral de la posicion inicial (m)
-        self.meta_lat = meta_lat      # la meta cae a +-meta_lat m del eje de salida
-        self.ancho = ancho            # los obstaculos caen a +-ancho m del eje de salida
-        self.yaw_max = yaw_max        # giro inicial aleatorio maximo (rad)
-        self.pasos_parada = pasos_parada  # pasos para volver a postura inicial
+        # variantes del entorno (los valores por defecto reproducen el entorno estandar
+        self.y_inicio = y_inicio      #desplazamiento lateral de la posicion inicial (m)
+        self.meta_lat = meta_lat      #la meta cae a +-meta_lat m del eje de salida
+        self.ancho = ancho            #los obstaculos caen a +-ancho m del eje de salida
+        self.yaw_max = yaw_max        #giro inicial aleatorio maximo (rad)
+        self.pasos_parada = pasos_parada  #pasos para volver a postura inicial
         self.meta_dist = meta_dist
         self.n_obstaculos = n_obstaculos
-        self.repeticion = repeticion      # pasos de simulacion por paso de RL
+        self.repeticion = repeticion      #pasos de simulacion por paso de RL
         self.max_pasos = max_pasos
-        self.z_caida = z_caida            # CALIBRAR: altura por debajo = caida
+        self.z_caida = z_caida            # CALIBRAR altura por debajo = caida
         self.r_obs = r_obstaculo
         self.r_robot = r_robot
 
@@ -63,8 +62,7 @@ class CarreraEnv(gym.Env):
         self.f_custom = self.robot.getField("customData")
         self.f_trans = self.robot.getField("translation")
         self.f_rot = self.robot.getField("rotation")
-        # esperar a que el robot se levante (parado, postura inicial) y medir
-        # su altura de pie: se usa para reiniciar sin enterrarle los pies
+        # esperar a que el robot se levante (parado, postura inicial) y medir su altura de pie: se usa para reiniciar sin enterrarle los pies
         self.f_custom.setSFString("0 0 0")
         for _ in range(2 * self.pasos_parada):
             self._sim_step()
@@ -89,7 +87,7 @@ class CarreraEnv(gym.Env):
         self.dist_prev = meta_dist
         self.obstaculos = []
 
-    # ---------- utilidades de Webots ----------
+   
     def _sim_step(self):
         if self.sup.step(self.dt) == -1:
             raise SystemExit
@@ -101,10 +99,10 @@ class CarreraEnv(gym.Env):
     def _estado(self):
         x, y, z = self.robot.getPosition()
         R = self.robot.getOrientation()
-        yaw = math.atan2(R[3], R[0])   # VERIFICAR: debe crecer al girar a la izq.
+        yaw = math.atan2(R[3], R[0])   # VERIFICAR debe crecer al girar a la izq.
         return x, y, z, yaw
 
-    # ---------- observacion ----------
+    #observacion
     def _obs(self):
         x, y, z, yaw = self._estado()
         dx, dy = self.meta[0] - x, self.meta[1] - y
@@ -121,7 +119,7 @@ class CarreraEnv(gym.Env):
         obs = [min(dist / self.meta_dist, 2.0), math.sin(ang), math.cos(ang)]
         return np.array(obs + rayos, dtype=np.float32)
 
-    # ---------- API de Gymnasium ----------
+    # API de Gymnasium
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         rng = self.np_random

@@ -17,25 +17,25 @@ from carrera_env import CarreraEnv
 from registro import RegistroEpisodios
 import pva_ac as P
 
-# ----------------------------------------------------------- configuracion
-MODO = "evaluar"          # "humo" (30 updates) | "entrenar" | "evaluar" (carga el .pt y evalua)
-AGENTE = "pva"         # "pva" | "a2c" | "aleatorio" | "heuristico" | "heuristico_directo"
+# configuracion
+MODO = "evaluar"          #"humo" (30 updates) - "entrenar" - "evaluar" (carga el .pt y evalua)
+AGENTE = "pva"         # "pva" - "a2c" - "aleatorio" - "heuristico" - "heuristico_directo"
 SEMILLA = 0
 NOMBRE = "pva"      # nombre del experimento en los archivos (p. ej. "pva_sin_aborto")
-CAMBIOS_CFG = {}       # p. ej. {"K": 1}, {"lam_s": 0.0}, {"H": 4}
-FLAGS_PVA = {}         # p. ej. {"use_abort": False}, {"use_abs": False}
-N_EVAL = 30            # episodios de evaluacion (mismas pistas para todos los agentes)
+CAMBIOS_CFG = {}       #p. ej. {"K": 1}, {"lam_s": 0.0}, {"H": 4}
+FLAGS_PVA = {}         #p. ej. {"use_abort": False}, {"use_abs": False}
+N_EVAL = 30            #episodios de evaluacion (mismas pistas para todos los agentes)
 N_OBST = 3             # variante del entorno para la evaluacion
 META_DIST = 3.0        # variante del entorno para la evaluacion
-Y_INICIO = 0.4         # variante: desplazamiento lateral de la salida (m)
+Y_INICIO = 0.4         #variante: desplazamiento lateral de la salida (m)
 META_LAT = 0.5         # variante: la meta cae a +-META_LAT m del eje
-ANCHO = 0.6            # variante: los obstaculos caen a +-ANCHO m del eje
-MAX_PASOS = 250        # variante: limite de pasos por episodio
-SOBRESCRIBIR = False   # True solo si quieres repetir un experimento que ya tiene .pt
-# -------------------------------------------------------------------------
+ANCHO = 0.6            #variante: los obstaculos caen a +-ANCHO m del eje
+MAX_PASOS = 250        #variante: limite de pasos por episodio
+SOBRESCRIBIR = False   #True solo si quieres repetir un experimento que ya tiene .pt
+
 
 if AGENTE in ("aleatorio", "heuristico", "heuristico_directo"):
-    NOMBRE = AGENTE               # las referencias siempre se guardan con su propio nombre
+    NOMBRE = AGENTE               #ñas referencias siempre se guardan con su propio nombre
 if MODO == "humo":
     NOMBRE = NOMBRE + "_humo"     # las pruebas cortas nunca pisan resultados reales
 
@@ -54,7 +54,7 @@ log_every = 10 if MODO == "humo" else 50
 env_crudo = CarreraEnv(meta_dist=META_DIST, n_obstaculos=N_OBST, y_inicio=Y_INICIO,
                        meta_lat=META_LAT, ancho=ANCHO, max_pasos=MAX_PASOS)
 
-# ---- referencias sin aprendizaje
+#referencias sin aprendizaje
 if AGENTE in ("aleatorio", "heuristico", "heuristico_directo"):
     env_eval = RegistroEpisodios(env_crudo, ruta_eval, NOMBRE, SEMILLA)
     if AGENTE == "aleatorio":
@@ -65,7 +65,7 @@ if AGENTE in ("aleatorio", "heuristico", "heuristico_directo"):
     print(f"evaluacion {AGENTE}: retorno {ev[0]:.1f} +- {ev[1]:.1f} | llegada a la meta {ev[2]:.0%}")
     raise SystemExit
 
-# ---- solo evaluar un checkpoint ya entrenado
+#solo evaluar un checkpoint ya entrenado
 if MODO == "evaluar":
     model, disc, ck = P.load_checkpoint(base + ".pt")
     env_eval = RegistroEpisodios(env_crudo, ruta_eval, NOMBRE, SEMILLA)
@@ -77,7 +77,7 @@ if MODO == "evaluar":
     print(f"evaluacion {NOMBRE}: retorno {ev[0]:.1f} +- {ev[1]:.1f} | llegada a la meta {ev[2]:.0%}")
     raise SystemExit
 
-# ---- entrenamiento
+#entrenamiento
 if MODO == "entrenar" and os.path.exists(base + ".pt") and not SOBRESCRIBIR:
     print(f"ERROR: ya existe {base}.pt. Cambia NOMBRE/SEMILLA o pon SOBRESCRIBIR = True.")
     raise SystemExit

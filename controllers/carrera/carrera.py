@@ -1,13 +1,10 @@
 """Supervisor de la carrera simultanea de 4 robots (controllers/carrera/carrera.py).
 
-Mundo: worlds/carrera_4robots.wbt (lo genera generar_mundo_carrera.py) con DEF ROBOT1..ROBOT4,
-cada uno con el controlador C++ "walk", y un Robot supervisor con controller "carrera".
-
-Pista con curvas: cada robot sigue una lista de puntos intermedios (WAYPOINTS, relativos a su salida);
+Pista con curvas: cada robot sigue una lista de puntos intermedios (WAYPOPINTS, relativos a su salida)
 el ultimo es la meta. Todos los carriles tienen la misma forma y los mismos obstaculos (carrera justa).
 Los robots se ven entre si como obstaculos en los rayos. Un robot sale de la carrera si se cae,
-choca con un obstaculo o (opcional) toca a otro robot. Gana el primero en llegar a la meta.
-Los agentes se entrenaron solo para ir a una meta; aqui la "meta" que ven es el siguiente punto.
+choca con un obstaculo otoca a otro robot. Gana el primero en llegar a la meta.
+Los agentes se entrenaron solo para ir a una meta, aqui la "meta" que ven es el siguiente punto.
 """
 import csv
 import math
@@ -26,6 +23,12 @@ from controller import Supervisor                                          # noq
 from carrera_env import ACCIONES, ANGULOS_RAYOS, RANGO_MAX, _rayo_circulo  # noqa: E402
 import agentes                                                             # noqa: E402
 
+PARTICIPANTES = [
+    ("PVA-AC", "pva", "pva_sin_abs_s2"),
+    ("A2C", "a2c", "a2c_s2"),
+    ("PPO", "ppo", "ppo_sX"),
+    ("DQN", "dqn", "dqn_sX"),
+]
 #configuracion
 SEMILLA = 0            # cambia el reparto de carriles y la posicion de los obstaculos
 PARTICIPANTES = [
@@ -34,21 +37,21 @@ PARTICIPANTES = [
     ("PPO", "ppo", "ppo_s0"),
     ("DQN", "dqn", "dqn_s0"),
 ]
-WAYPOINTS = [(1.5, 0.6), (3.0, -0.6), (4.5, 0.0)]   # relativos a la salida; el ultimo = meta
+WAYPOINTS = [(1.5, 0.6), (3.0, -0.6), (4.5, 0.0)]   # relativos a la salida, el ultimo = meta
 N_OBST = 3
 MAX_DECISIONES = 400
-REPETICION = 25        # pasos de simulacion por decision (igual que en el entrenamiento)
-R_OBS, R_ROBOT = 0.15, 0.12     # mismos radios que CarreraEnv
-R_ENTRE_ROBOTS = 0.30           # contacto entre robots
+REPETICION = 25        #pasos de simulacion por decision (igual que en el entrenamiento)
+R_OBS, R_ROBOT = 0.15, 0.12     #mismos radios que CarreraEnv
+R_ENTRE_ROBOTS = 0.30           #ontacto entre robots
 RADIO_WP, RADIO_META = 0.5, 0.3
 Z_CAIDA = 0.20
-META_DIST_NORM = 3.0            # normalizacion de la distancia, como en el entrenamiento
+META_DIST_NORM = 3.0            # normalizacion de la distancia como en el entrenamiento
 ELIMINAR_POR_CHOQUE = True      # False: solo se cuentan los contactos
-GRABAR_VIDEO = False            # API de Webots por verificar; si falla solo avisa
-# -------------------------------------------------------------------------
+GRABAR_VIDEO = False            # API de Webots por verificar, si falla solo avisa
+
 
 N = 4
-COLORES = ["1 0.2 0.2", "0.2 0.4 1", "0.2 0.8 0.2", "1 0.8 0.1"]   # carril 1..4
+COLORES = ["1 0.2 0.2", "0.2 0.4 1", "0.2 0.8 0.2", "1 0.8 0.1"]   # carril 1.4
 
 sup = Supervisor()
 dt = int(sup.getBasicTimeStep())
@@ -75,7 +78,7 @@ def pose(j):
     return x, y, z, math.atan2(R[3], R[0])
 
 
-# ---- reparto de carriles: participante p corre en el robot (carril) orden[p]
+#reparto de carriles: participante p corre en el robot (carril) orden[p]
 rng = random.Random(SEMILLA)
 orden = list(range(N))
 rng.shuffle(orden)
@@ -84,15 +87,14 @@ ags = []
 for p, (nombre, tipo, archivo) in enumerate(PARTICIPANTES):
     ags.append(agentes.cargar(tipo, archivo, RES, SEMILLA + p))
 
-# ---- los robots se levantan y se leen las posiciones de salida
+# los robots se levantan y se leen las posiciones de salida
 for c in customs:
     c.setSFString("0 0 0")
 avanzar(200)
 salida = [pose(j)[:2] for j in range(N)]
-wps = [[(salida[j][0] + wx, salida[j][1] + wy) for wx, wy in WAYPOINTS] for j in range(N)]
 meta = [w[-1] for w in wps]
 
-# ---- obstaculos: mismo patron relativo en cada carril
+# obstaculos: mismo patron relativo en cada carril
 ro = random.Random(1000 + SEMILLA)
 ruta = [(0.0, 0.0)] + WAYPOINTS
 patron, intentos = [], 0
@@ -109,7 +111,7 @@ for ox, oy in obstaculos:
     crear(f"Solid {{ translation {ox} {oy} 0.25 children [ Shape {{ appearance PBRAppearance "
           "{ baseColor 0.9 0.2 0.2 roughness 1 metalness 0 } geometry Box { size 0.3 0.3 0.5 } } ] "
           "boundingObject Box { size 0.3 0.3 0.5 } }")
-# ---- marcas visuales: puntos intermedios por carril y linea de meta
+#marcas visuales cmo puntos intermedios por carril y linea de meta
 for j in range(N):
     for (wx, wy) in wps[j][:-1]:
         crear(f"Solid {{ translation {wx} {wy} 0.005 children [ Shape {{ appearance PBRAppearance "
@@ -129,7 +131,7 @@ if GRABAR_VIDEO:
         print("No se pudo iniciar la grabacion:", e)
         GRABAR_VIDEO = False
 
-# ---- estado de cada robot
+#estado de cada robot
 est = []
 for j in range(N):
     x, y, _, _ = pose(j)
@@ -164,7 +166,7 @@ def observacion(j):
                     dtype=np.float32)
 
 
-# ---- carrera
+#carrera
 print("¡Salida!")
 for d in range(MAX_DECISIONES):
     activos = [j for j in range(N) if est[j]["activo"]]
@@ -219,7 +221,7 @@ if GRABAR_VIDEO:
     except Exception as e:                                                   # noqa: BLE001
         print("No se pudo cerrar la grabacion:", e)
 
-# ---- resultados
+#resultados
 filas = []
 for j in range(N):
     x, y, _, _ = pose(j)

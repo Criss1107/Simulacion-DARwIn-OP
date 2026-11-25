@@ -26,7 +26,7 @@ OBS_DIM = 8     # = tamano de la observacion en carrera_env.py
 
 @dataclass
 class Cfg:
-    n_steps: int = 20           # con 1 solo entorno se usa un lote mayor que 5
+    n_steps: int = 20           #on 1 solo entorno se usa un lote mayor que 5
     gamma: float = 0.99
     lr: float = 7e-4
     ent_coef: float = 0.01
@@ -40,20 +40,20 @@ class Cfg:
     H: int = 8                  # largo de la habilidad
     zdim: int = 8
     N_cand: int = 8             # candidatos por consulta
-    beta_o: float = 1.0         # optimismo del proponedor
-    beta_p: float = 0.5         # pesimismo de la verificacion
+    beta_o: float = 1.0         #ptimismo del proponedor
+    beta_p: float = 0.5         #pesimismo de la verificacion
     lam_s: float = 0.1          # peso de la sorpresa (VALOR ASUMIDO: el informe no lo da)
     warmup_updates: int = 300   # updates iniciales donde se aceptan habilidades al azar
-    warmup_p: float = 0.5       # prob. de aceptar durante el warm-up
+    warmup_p: float = 0.5       #prob. de aceptar durante el warm-up
     lam_kl: float = 0.01
     vae_beta: float = 0.1
-    eps: float = 0.0            # margen para aceptar una habilidad
+    eps: float = 0.0            #margen para aceptar una habilidad
     kappa: float = 2.0          # umbral de aborto
     eta: float = 0.1
     ask_cost: float = 0.01
 
 
-# ---------------------------------------------------------------- redes
+#redes
 class Encoder(nn.Module):
     def __init__(self, feat_dim=128):
         super().__init__()
@@ -156,7 +156,7 @@ def should_abort(partial_return, j, v_next, q_mu0, q_sig0, cfg):
     return delta < -(cfg.kappa * q_sig0 + cfg.eta)
 
 
-# ---------------------------------------------------------------- checkpoints
+#checkpoints
 def save_checkpoint(path, model, disc=None, c=None):
     import os
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
@@ -203,7 +203,7 @@ class SegBuf:
         return len(self.data)
 
 
-# ---------------------------------------------------------------- A2C base
+# A2C base
 def train_a2c(env, cfg, n_updates=None, log_every=50, verbose=True):
     n_updates = n_updates or cfg.total_updates
     torch.manual_seed(cfg.seed); np.random.seed(cfg.seed); random.seed(cfg.seed)
@@ -257,7 +257,7 @@ def train_a2c(env, cfg, n_updates=None, log_every=50, verbose=True):
     return model, history
 
 
-# ---------------------------------------------------------------- PVA-AC
+#PVA-AC
 def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=True,
               lam_abs=0.5, use_warmup=True, verbose=True):
     n_updates = n_updates or cfg.total_updates
@@ -364,7 +364,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
             buf["mask"].append(torch.tensor(masks, device=device, dtype=torch.float32))
             obs = np.stack(nxt)
 
-        # ---- retornos n-step
+        #retornos n-step
         with torch.no_grad():
             _, v_last, _ = model(torch.as_tensor(obs, device=device))
             R = v_last.mean(-1)
@@ -373,7 +373,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
             R = buf["rew"][t] + cfg.gamma * R * (1 - buf["done"][t]); rets.append(R)
         rets = torch.stack(rets[::-1]).flatten()
         o = torch.cat(buf["obs"]); a = torch.cat(buf["act"]); m = torch.cat(buf["mask"])
-        # ---- actor-critic (el actor solo aprende de decisiones que tomo el mismo)
+        #actor-critic (el actor solo aprende de decisiones que tomo el mismo)
         logits, v, feat = model(o)
         vm = v.mean(-1); adv = (rets - vm).detach()
         dist = torch.distributions.Categorical(logits=logits)
@@ -382,7 +382,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
         ent = (dist.entropy() * m).sum() / msum
         vloss = ((v - rets[:, None]) ** 2).mean()
         loss = pg + cfg.vf_coef * vloss - cfg.ent_coef * ent
-        if use_abs and len(absbuf) >= 64:                           # absorcion
+        if use_abs and len(absbuf) >= 64:                           #absorcion
             b = random.sample(absbuf, 64)
             ob = torch.as_tensor(np.stack([x[0] for x in b]), device=device)
             ab = torch.as_tensor([x[1] for x in b], device=device)
@@ -391,7 +391,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
         opt.zero_grad(); loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg.max_grad_norm); opt.step()
 
-        # ---- ensamble Q con mascaras Bernoulli
+        #ensamble Q con mascaras Bernoulli
         if len(qbuf) >= 64:
             b = random.sample(qbuf, 64)
             ob = torch.as_tensor(np.stack([x[0] for x in b]), device=device)
@@ -403,7 +403,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
             qv = disc.q(torch.cat([fb, zb], -1))
             lq = (mk * (qv - yb[:, None]) ** 2).sum() / mk.sum().clamp(min=1)
             opt_q.zero_grad(); lq.backward(); opt_q.step()
-        # ---- VAE de habilidades (solo retorno alto)
+        #VAE de habilidades (solo retorno alto)
         sb = segs.sample_top(64)
         if sb is not None:
             ob, ab = sb
@@ -411,7 +411,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
                 fb = model.enc(ob)
             lv = disc.vae_loss(fb, ab, cfg.vae_beta)
             opt_v.zero_grad(); lv.backward(); opt_v.step()
-        # ---- proponedor optimista (solo actualiza disc.prop)
+        # proponedor optimista (solo actualiza disc.prop)
         if len(qbuf) >= 64:
             J = disc.proposer_objective(feat.detach(), logits.detach(), cfg)
             opt_p.zero_grad(); (-J).backward(); opt_p.step()
@@ -438,7 +438,7 @@ def train_pva(env, cfg, n_updates=None, log_every=50, use_abort=True, use_abs=Tr
     return model, disc, history
 
 
-# ---------------------------------------------------------------- evaluacion
+# evaluacion
 def _exito(info):
     return float(info.get("motivo") == "meta")
 

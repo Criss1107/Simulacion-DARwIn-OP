@@ -1,8 +1,5 @@
 """Agentes para la carrera: cargan un modelo entrenado y devuelven una accion por observacion.
-
-Interfaz comun:
-    agente.reiniciar()
-    agente.actuar(obs, r_prev) -> int   (accion 0..4)
+Interfaz - agente.reiniciar() - agente.actuar(obs, r_prev) -> int   (accion 0..4)
 `obs` es la observacion de 8 valores de CarreraEnv. `r_prev` es la recompensa del paso anterior
 (5 * progreso - 0.01); solo la usa PVA-AC para decidir si aborta una habilidad.
 
